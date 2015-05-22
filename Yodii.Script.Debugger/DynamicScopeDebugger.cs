@@ -41,7 +41,8 @@ namespace Yodii.Script.Debugger
 
         public Variable FindByName( string name )
         {
-            return _variables.FindLast( v => v.Name == name );
+            var a = _variables.LastOrDefault( v => v.Name == name );
+            return a;
         }
 
         #endregion

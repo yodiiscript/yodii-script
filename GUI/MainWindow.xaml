@@ -1,0 +1,9 @@
+﻿<Window x:Class="GUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainWindow" Height="720" Width="1280">
+    <Grid>
+        <Button Content="Start" HorizontalAlignment="Left" Margin="962,34,0,0" VerticalAlignment="Top" Width="191" Height="47" Click="Button_Click"/>
+        <StackPanel HorizontalAlignment="Left" Height="309" Margin="783,158,0,0" VerticalAlignment="Top" Width="428" Name="StackTest"/>
+    </Grid>
+</Window>

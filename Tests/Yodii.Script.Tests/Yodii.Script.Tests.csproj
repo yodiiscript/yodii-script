@@ -75,7 +75,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Yodii.Script\Yodii.Script.csproj">
       <Project>{388870e4-cf4e-45b5-bbec-ec6fad2e7490}</Project>
-      <Name>CK.Javascript</Name>
+      <Name>Yodii.Script</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
