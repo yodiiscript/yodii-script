@@ -114,5 +114,91 @@ namespace Yodii.Script.Debugger.Tests
                 r2.Continue();
             }
         }
+
+        struct RuntimeObjNull {}
+
+        [TestCase( "toto", null )]
+        [TestCase( "4 + toto", typeof( SyntaxErrorExpr ) )]
+        [TestCase( "toto + 4", typeof(SyntaxErrorExpr) )]
+        [TestCase( "3 + 4", typeof( SyntaxErrorExpr ) )]
+        [TestCase( "This is a string", null )]
+        [TestCase( "a\"\"b", null )]
+        [TestCase( "null", typeof(RuntimeObjNull) )]
+        [TestCase( "\r 7", 7.0 )]
+        [TestCase( @"""A""", "A" )]
+        [TestCase( @"""A\""B""", "A\"B" )]
+        [TestCase( "\"A\\r\"", "A\r" )]
+        public void check_if_the_input_and_output_string_are_the_same( string inputString, object expected  )
+        {
+            GlobalContext ctx = new GlobalContext();
+            RuntimeObj result;
+             bool error = EvalTokenizerDebugger.TryParse( ctx, inputString, out result );
+                
+            if( expected == null )  Assert.That( result == null && error );
+            else 
+            {
+                if( expected is string )
+                {
+                    Assert.That( result.Type, Is.EqualTo( RuntimeObj.TypeString ) );
+                    Assert.That( result.ToString(), Is.EqualTo( expected ) );
+                }
+                else if( expected is double )
+                {
+                    Assert.That( result.Type, Is.EqualTo( RuntimeObj.TypeNumber ) );
+                    Assert.That( result.ToDouble(), Is.EqualTo( expected ) );
+                }
+                else if( expected is Boolean )
+                {
+                    Assert.That( result.Type, Is.EqualTo( RuntimeObj.TypeBoolean ) );
+                    Assert.That( result.ToBoolean(), Is.EqualTo( expected ) );
+                }
+                else if( (Type)expected == typeof( RuntimeObjNull ) )
+                {
+                    Assert.That( result, Is.SameAs( RuntimeObj.Null ) );
+                }
+                else if( (Type)expected == typeof( SyntaxErrorExpr ) )
+                {
+                    Assert.That( error == true);
+                }
+                //
+
+            }
+        }
+
+        /*[Test]
+        public void testbenoit()
+        {
+           ScriptEngineDebugger _engine = new ScriptEngineDebugger( new GlobalContext() );
+
+            string script = @"let a,b,c;
+                               a=5;
+                               b='test';
+                               c= a+b 
+                               let d = 4";
+
+            string txt = "\"texteeasy\"";
+            Expr exp = ExprAnalyser.AnalyseString( script );
+
+            BreakableVisitor bkv = new BreakableVisitor();
+            bkv.VisitExpr( exp );
+            _engine.Breakpoints.AddBreakpoint( bkv.BreakableExprs[4] );
+            using( var r2 = _engine.Execute( exp ) )
+            {
+                RefRuntimeObj O = _engine.ScopeManager.FindByName( "a" ).Object;
+                RuntimeObj result;
+                bool error;
+                result = EvalTokenizerDebugger.TryParse( txt, out error );
+                if( result == null && error == true )
+                {
+                    Console.WriteLine( "zob" );
+                }
+                else if( result != null )
+                {
+                    O.Value = result;
+                }
+                Assert.That( O.Type == RefRuntimeObj.TypeString );
+                Assert.That( txt == EvalTokenizerDebugger.TryEscape( O.Value.ToString() ) );
+            }
+        }*/
     }
 }

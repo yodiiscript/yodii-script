@@ -10,11 +10,11 @@
 
         <TextBox x:Name="addVars" HorizontalAlignment="Left" Height="23" Margin="0,80,0,0" TextWrapping="Wrap" Text="addVars" VerticalAlignment="Top" Width="120" TextAlignment="Center"/>
         <Button x:Name="add" Content="add" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="248,81,0,0" Click="add_Click"/>
-        <ListView Name="Watche" Margin="0,103,0,0" ItemsSource="{Binding VarsCollection}" AlternationCount="-1">
+        <ListView Name="Watche" Margin="0,103,0,0" ItemsSource="{Binding VarsCollection}" AlternationCount="-1" IsSynchronizedWithCurrentItem="True">
             <ListView.View>
                 <GridView>
 
-                    <GridViewColumn x:Name="Name" Width="140" Header="Name" DisplayMemberBinding="{Binding VarName}"/>                      
+                    <GridViewColumn x:Name="Name" Width="140" Header="Name" DisplayMemberBinding="{Binding VarName}"/>
                     <GridViewColumn x:Name="Type" Width="140" Header="Type" DisplayMemberBinding="{Binding VarType}"/>
                     <GridViewColumn x:Name="Value" Width="140" Header="Value">
                         <GridViewColumn.CellTemplate>
@@ -26,7 +26,8 @@
                 </GridView>
             </ListView.View>
         </ListView>
-        
+
         <Button x:Name="clearButton" Content="Clear" HorizontalAlignment="Left" Margin="323,80,0,0" VerticalAlignment="Top" Width="75" Click="clearButton_Click"/>
+        <Button x:Name="_continue" Content="Continue" HorizontalAlignment="Left" Margin="0,25,0,0" VerticalAlignment="Top" Width="154" Height="37" Click="_continue_Click"/>
     </Grid>
 </UserControl>

@@ -1,4 +1,6 @@
 ﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,13 +17,14 @@ namespace GUI
     {
         ObservableCollection<VarData> _varsCollection = new ObservableCollection<VarData>();
         ScriptEngineDebugger _engine = new ScriptEngineDebugger( new GlobalContext() );
-
+        ScriptEngine.Result _res;
         public Watch(){
 
             
             string script = @"let a,b,c;
                                a=5;
                                b='test';
+                                a = true;
                                c= a+b 
                                let d = 4";
 
@@ -29,15 +32,17 @@ namespace GUI
 
             BreakableVisitor bkv = new BreakableVisitor();
             bkv.VisitExpr( exp );
+            _engine.Breakpoints.AddBreakpoint( bkv.BreakableExprs[1] );
             _engine.Breakpoints.AddBreakpoint( bkv.BreakableExprs[4] );
-            using( var r2 = _engine.Execute( exp ) )
-            {
-               // r2.Continue();
-}
-
+            _res = _engine.Execute( exp );
+             if( !_res.CanContinue )
+             {
+                 _res.Dispose();
+             }
 
         
       InitializeComponent();
+            
             
             
       
@@ -50,6 +55,7 @@ namespace GUI
 
     private void add_Click( object sender, RoutedEventArgs e )
     {
+        
         var Test = _engine.ScopeManager.FindByName( addVars.Text );
         if( Test == null )
         {
@@ -65,9 +71,10 @@ namespace GUI
             _varsCollection.Add( new VarData
             {
                 VarName = addVars.Text,
-                VarValue = TryEscape(Test.Object.ToString()),
+                VarValue = EvalTokenizerDebugger.Escape(Test.Object.ToString()),
                 VarType = Test.Object.Type.ToString(),
             } );
+            
         }
     }
 
@@ -75,10 +82,10 @@ namespace GUI
     {
         _varsCollection.Clear();
         
+        
     }
 
-    
-
+   
     private void TextBox_KeyDown( object sender, System.Windows.Input.KeyEventArgs e )
     {
         if( e.Key == System.Windows.Input.Key.Enter )
@@ -87,15 +94,13 @@ namespace GUI
             TextBox tb = (TextBox)sender;
             var a = tb.Text;
 
-
-
-
             GUI.VarData obj2 = tb.DataContext as GUI.VarData;
             RefRuntimeObj O = _engine.ScopeManager.FindByName( obj2.VarName ).Object;
            
             RuntimeObj result;
             bool error;
-            result = TryParse(a, out error);
+           
+            error = EvalTokenizerDebugger.TryParse(_engine.Context, a, out result);
             if( result == null && error == true )
             {
                 MessageBoxResult popUp = MessageBox.Show( "Invalid Input" );
@@ -104,93 +109,79 @@ namespace GUI
                  
             } else if (result != null)
             {
+               
                 O.Value = result;
+                obj2.Refresh(_engine);
+
             }
+        }           
+    }
 
-           
-            
-           
-          
-
-        }
-
+    private void _continue_Click( object sender, RoutedEventArgs e )
+    {
         
-
-    }
-
-    private string TryEscape( string a )
-    {
-        StringBuilder MyString = new StringBuilder();
-       
-
-        for( int cmpt = 0; cmpt < a.Length; cmpt++ )
+        if( !_res.CanContinue )
         {
-
-           
-           switch( a[cmpt] )
-            {
-                case '"': MyString.Append( '\\' ); MyString.Append( '"' ); break;
-                case '\\': MyString.Append( '\\'); break;
-                case '\n': MyString.Append( "\\n" ); break;
-                case '\t': MyString.Append( "\\t" ); break;
-                case '\r': MyString.Append( "\\r" ); break;
-                case '\b': MyString.Append( "\\b" ); break;
-                case '\v': MyString.Append( "\\v" ); break;
-                case '\f': MyString.Append( "\\f" ); break;
-                default: MyString.Append( a[cmpt]); break;
-            }
-        }
-
-            return MyString.ToString();
-    }
-
-
-    private RuntimeObj TryParse( string a, out bool hasError )
-    {
-        hasError = false;
-        RuntimeObj result;
-        var j = new JSTokenizer( a );
-        string sValue = j.ReadString();
-        if( sValue != null )
-        {
-            result = _engine.Context.CreateString( sValue );
-        }
-        else if( j.IsNumber )
-        {
-            double dValue = j.ReadDouble();
-            result = _engine.Context.CreateNumber( dValue );
-        }
-        else if( j.MatchIdentifier( JSSupport.TrueString ) )
-        {
-            result = JSEvalBoolean.True;
-        }
-        else if( j.MatchIdentifier( JSSupport.FalseString ) )
-        {
-            result = JSEvalBoolean.True;
-        }
-        else if( j.MatchIdentifier( "null" ) )
-        {
-            result = RuntimeObj.Null;
-        }
-        else if( j.MatchIdentifier( "undefined" ) )
-        {
-            result = RuntimeObj.Undefined;
+            _res.Dispose();
         }
         else
         {
-            return null;
+            _res.Continue();
         }
-        if( j.IsEndOfInput ) return result;
-        hasError = true;
-        return null;
+        foreach( VarData v in _varsCollection )
+        {
+            v.Refresh( _engine );
+        }        
     }
-  }  
 
-  public class VarData
+}  
+
+ 
+
+  public class VarData : INotifyPropertyChanged
   {
-    public string VarName { get; set; }
-    public string VarType { get; set; }
-    public string VarValue { get; set; }
+      string _name;
+      string _type;
+      string _value;
+
+
+      public string VarName
+      {
+          get { return _name; }
+          set { _name = value; }
+      }
+    public string VarType { 
+        get{return _type;}
+        set{ _type = value;
+        RaisePropertyChanged( "VarType" );           
+            }
+    }
+    public string VarValue { 
+        get{return _value;}
+        set{_value = value;
+            RaisePropertyChanged("VarValue");
+        }
+    }
+    public void Refresh(ScriptEngineDebugger engine)
+    {
+        var Test = engine.ScopeManager.FindByName( this.VarName );
+
+        this.VarValue = EvalTokenizerDebugger.Escape(Test.Object.ToString());
+        this.VarType = Test.Object.Type.ToString();
+    }
+
+    #region INotifyPropertyChanged Members
+    protected void RaisePropertyChanged( [CallerMemberName] string name = null )
+    {
+        if( PropertyChanged != null )
+        {
+            PropertyChanged( this, new PropertyChangedEventArgs( name ) );
+        }
+
+    }
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    #endregion
   }
        
 }

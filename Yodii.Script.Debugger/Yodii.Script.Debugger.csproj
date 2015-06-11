@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="BreakableVisitor.cs" />
     <Compile Include="DynamicScopeDebugger.cs" />
+    <Compile Include="EvalTokenizerDebugger.cs" />
     <Compile Include="IVariableList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ScriptEngineDebugger.cs" />
